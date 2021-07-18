@@ -1,15 +1,10 @@
-from pyspark import SparkContext, SparkConf
+from pyspark.sql import SparkSession
+spark = SparkSession.builder.master("local[*]").getOrCreate()
 
-if __name__ == "__main__":
-    conf = SparkConf().setAppName("word count").setMaster("local[3]")
-    sc = SparkContext(conf = conf)
+def hasNumbers(inputString):
+     return any(char.isdigit() for char in inputString)
     
-    lines = sc.textFile("in/word_count.text")
-    
-    words = lines.flatMap(lambda line: line.split(" "))
-    
-    wordCounts = words.countByValue()
-    
-    for word, count in wordCounts.items():
-        print("{} : {}".format(word, count))
-
+lines = spark.sparkContext.textFile('/in/word_count.text')
+words = lines.flatMap(lambda line: [word.strip('&(') for word in line.lower().split(" ") if hasNumbers(word) is False])
+wordCounts = words.countByValue()
+print(sorted(wordCounts.items(), key=lambda item: item[1], reverse=True))
